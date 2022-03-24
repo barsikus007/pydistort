@@ -1,0 +1,85 @@
+[[package]]
+name = "apng"
+version = "0.3.4"
+description = "A Python module to deal with APNG file."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.source]
+type = "legacy"
+url = "https://www.piwheels.org/simple"
+reference = "piwheels"
+
+[[package]]
+name = "glaxnimate"
+version = "0.5.0.3"
+description = "Python bindings for Glaxnimate"
+category = "main"
+optional = false
+python-versions = ">=3"
+
+[[package]]
+name = "lottie"
+version = "0.6.11"
+description = "A framework to work with lottie files and telegram animated stickers (tgs)"
+category = "main"
+optional = false
+python-versions = ">=3"
+
+[package.dependencies]
+glaxnimate = {version = "*", optional = true, markers = "extra == \"GIF\""}
+pillow = {version = "*", optional = true, markers = "extra == \"GIF\""}
+
+[package.extras]
+AnimatedSVG = ["glaxnimate"]
+GIF = ["glaxnimate", "pillow"]
+GUI = ["qscintilla"]
+PDF = ["cairosvg"]
+PNG = ["glaxnimate"]
+all = ["qscintilla", "cairosvg", "fonttools", "glaxnimate", "grapheme", "numpy", "opencv-python", "pillow"]
+emoji = ["grapheme"]
+images = ["pillow"]
+text = ["fonttools"]
+trace = ["glaxnimate", "pillow"]
+video = ["numpy", "opencv-python", "pillow"]
+
+[package.source]
+type = "legacy"
+url = "https://www.piwheels.org/simple"
+reference = "piwheels"
+
+[[package]]
+name = "pillow"
+version = "9.0.1"
+description = "Python Imaging Library (Fork)"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.source]
+type = "legacy"
+url = "https://www.piwheels.org/simple"
+reference = "piwheels"
+
+[metadata]
+lock-version = "1.1"
+python-versions = "^3.10"
+content-hash = "0f076d633470975bf60219164df070d92c03f2ed4f9735e95f2b4278ec9201fd"
+
+[metadata.files]
+apng = [
+    {file = "apng-0.3.4-py2.py3-none-any.whl", hash = "sha256:6cb5d09d2c5cfd12226a13e64e731dcf94a399ba252d122309134a86ce14c942"},
+]
+glaxnimate = [
+    {file = "glaxnimate-0.5.0.3-py3-none-win32.whl", hash = "sha256:1921f8bc030ba388a2970893ba4b3ad2db796280c5fe7d38ce157831d8ba1cf5"},
+]
+lottie = [
+    {file = "lottie-0.6.11-py3-none-any.whl", hash = "sha256:825275da9cf85c66ffbedf96b7973f7d30aa42dd3c42466c8de58016a1752192"},
+]
+pillow = [
+    {file = "Pillow-9.0.1-cp37-cp37m-linux_armv6l.whl", hash = "sha256:834cf8f41fae68122c73f7a0a89100477bb5c2b6828997b5f0f35cd48a8b3106"},
+    {file = "Pillow-9.0.1-cp37-cp37m-linux_armv7l.whl", hash = "sha256:834cf8f41fae68122c73f7a0a89100477bb5c2b6828997b5f0f35cd48a8b3106"},
+    {file = "Pillow-9.0.1-cp39-cp39-linux_armv6l.whl", hash = "sha256:03b060e92504fac5efee59a08b6080bbf84791a46407d5cea3ac2d12c353fedd"},
+    {file = "Pillow-9.0.1-cp39-cp39-linux_armv7l.whl", hash = "sha256:03b060e92504fac5efee59a08b6080bbf84791a46407d5cea3ac2d12c353fedd"},
+]
