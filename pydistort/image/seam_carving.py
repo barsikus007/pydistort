@@ -174,7 +174,6 @@ class SeamCarving:
                 res[j] = prev + 1
         return res
 
-
     def find_shrinked_pixels_alt(self):
         image = self.image
         img_height = image.height
@@ -273,3 +272,15 @@ class SeamCarving:
         print("redy")
         self.image.show()
         return self.image.save("test3.png")
+
+
+if __name__ == '__main__':
+    pass
+    # SeamCarving("test.png").show_energy()
+    # SeamCarving("test.png")._find_sum()
+    # SeamCarving("test.png")._show_sum()
+    # SeamCarving("test.png")._show_shrinked_pixels()
+
+    # SeamCarving("test.png").remove_lines(50)
+    # SeamCarving("test.png").remove_lines_alt(50)
+    # numba
