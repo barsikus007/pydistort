@@ -6,3 +6,4 @@ Is not async
 - [ ] Write check list
 - [ ] Write readme
 - [ ] Make filestructure
+- [ ] Rewrite seam carving

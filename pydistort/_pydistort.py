@@ -1,26 +1,33 @@
 import os
 import sys
-import asyncio
-from time import sleep
-from datetime import datetime
-from threading import Thread
 import shutil
-import subprocess
+import asyncio
 from pathlib import Path
 from random import randint
 
 from apng import APNG
 from PIL import Image, ImageSequence
-from pydistort.utils.runners import run
 
-"""
-pip install -e .
-###
-pip install -U git+https://github.com/barsikus007/pydistort
-"""
+from pydistort.utils.runners import run
 
 
 scripts = sys.executable.split('python.exe')[0]
+
+
+def make_apng(dist_frames, duration, filename_png, lib='apng') -> None:
+    if lib == 'apng':
+        return APNG.from_files(dist_frames, delay=duration).save(filename_png)
+    if lib == 'pil':
+        frame, *frames = [Image.open(image) for image in dist_frames]
+        return frame.save(
+            filename_png,
+            append_images=frames,
+            save_all=True,
+            duration=duration,
+            loop=0,
+        )
+    if lib == 'magick':
+        return
 
 
 class Process:
@@ -80,13 +87,13 @@ class Process:
             folder.mkdir(parents=True, exist_ok=True)
             coros = []
             for i, frame in enumerate(frames):
-                temp_name = f"tmp/{i + 1}.png"
+                temp_name = f"tmp/{i + 1:03d}.png"
                 frame.save(temp_name, format="PNG")
                 coros.append(self.create_coro(temp_name, 20 + dist_step * i, i, n_frames))
         dist_frames = []
         await asyncio.gather(*coros)
         for i in range(n_frames):
-            dist_frames.append(Image.open(f"tmp/{i + 1}.png"))
+            dist_frames.append(Image.open(f"tmp/{i + 1:03d}.png"))
         with Image.open("tmp/1.png") as dist_image:
             dist_image.save(filename, save_all=True, append_images=dist_frames[1:],
                             format="gif", duration=duration, loop=0)
@@ -116,7 +123,7 @@ class Process:
             folder.mkdir(parents=True, exist_ok=True)
             coros = []
             for i, frame in enumerate(frames):
-                temp_name = f"tmp/{i + 1}.png"
+                temp_name = f"tmp/{i + 1:03d}.png"
                 dist_frames.append(temp_name)
                 frame.save(temp_name, format="PNG")
                 coros.append(self.create_coro(temp_name, 20 + dist_step * i, i, n_frames))
@@ -146,10 +153,10 @@ class Process:
             folder = Path("tmp/")
             folder.mkdir(parents=True, exist_ok=True)
             for i, frame in enumerate(frames):
-                temp_name = f"tmp/{i + 1}.png"
+                temp_name = f"tmp/{i + 1:03d}.png"
                 dist_frames.append(temp_name)
                 frame.save(temp_name, format="PNG")
-                print(f'{i + 1}/{n_frames}')
+                print(f'{i + 1:03d}/{n_frames}')
 
         with open(filename_png, 'wb'):
             APNG.from_files(dist_frames, delay=duration).save(filename_png)
@@ -173,19 +180,19 @@ class Process:
         folder = Path("tmp/")
         folder.mkdir(parents=True, exist_ok=True)
         for i in range(n_frames):
-            temp_name = f"tmp/{i + 1}.png"
+            temp_name = f"tmp/{i + 1:03d}.png"
             shutil.copyfile(filename, temp_name)
             if random:
                 await self.distort(temp_name, randint(a, b))
             else:
                 await self.distort(temp_name, a + dist_step * i)
-            print(f'{i + 1}/{n_frames}')
+            print(f'{i + 1:03d}/{n_frames}')
         dist_frames = []
         for i in range(n_frames):
-            dist_frames.append(Image.open(f"tmp/{i + 1}.png"))
+            dist_frames.append(Image.open(f"tmp/{i + 1:03d}.png"))
         if reverse:
             for i in range(n_frames, 0, -1):
-                dist_frames.append(Image.open(f"tmp/{i}.png"))
+                dist_frames.append(Image.open(f"tmp/{i:03d}.png"))
         filename = filename[:-4:] + ".gif"
         with Image.open("tmp/1.png") as dist_image:
             dist_image.save(filename, save_all=True, append_images=dist_frames[1:],
@@ -219,10 +226,10 @@ class Process:
             folder = Path("tmp/")
             folder.mkdir(parents=True, exist_ok=True)
             for frame, i in zip(frames, range(n_frames)):
-                temp_name = f"tmp/{i + 1}.png"
+                temp_name = f"tmp/{i + 1:03d}.png"
                 dist_frames.append(temp_name)
                 frame.save(temp_name, format="PNG")
-                print(f'{i + 1}/{n_frames}')
+                print(f'{i + 1:03d}/{n_frames}')
         with open(filename_png, 'wb'):
             APNG.from_files(dist_frames, delay=duration).save(filename_png)
         dist_frames.clear()
