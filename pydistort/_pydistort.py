@@ -10,7 +10,8 @@ from pathlib import Path
 from random import randint
 
 from apng import APNG
-from PIL import Image, ImageDraw, ImageSequence
+from PIL import Image, ImageSequence
+from pydistort.utils.runners import run
 
 """
 pip install -e .
@@ -20,26 +21,6 @@ pip install -U git+https://github.com/barsikus007/pydistort
 
 
 scripts = sys.executable.split('python.exe')[0]
-
-
-async def run(cmd, silent=False):
-    if not isinstance(cmd, str):
-        cmd = " ".join(cmd)
-
-    proc = await asyncio.create_subprocess_shell(
-        cmd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE
-    )
-
-    stdout, stderr = await proc.communicate()
-
-    if not silent:
-        print(f'[{cmd!r} exited with {proc.returncode}]')
-        if stdout:
-            print(f'[stdout]\n{stdout.decode(errors="ignore")}')
-        if stderr:
-            print(f'[stderr]\n{stderr.decode(errors="ignore")}')
 
 
 class Process:
@@ -59,7 +40,7 @@ class Process:
         while self.q > self.limit:
             await asyncio.sleep(0.1)
         self.q += 1
-        command = (sys.executable, f"{scripts}lottie_convert.py", filename_json, filename, "--fps", "60")
+        command = [sys.executable, f"{scripts}lottie_convert.py", filename_json, filename, "--fps", "60"]
         await run(command)
         self.q -= 1
 
@@ -74,9 +55,9 @@ class Process:
             imgdim = image.width, image.height
         kok = (100 - level) % 100
         if os.name == "nt":
-            command = ("magick", "convert", f'"{filename}"', "-liquid-rescale", f"{kok}%", "-resize", f"{imgdim[0]}x{imgdim[1]}", f'"{filename}"')
+            command = ["magick", "convert", f'"{filename}"', "-liquid-rescale", f"{kok}%", "-resize", f"{imgdim[0]}x{imgdim[1]}", f'"{filename}"']
         else:
-            command = ("convert", f'"{filename}"', "-liquid-rescale", f"{kok}%", "-resize", f"{imgdim[0]}x{imgdim[1]}", f'"{filename}"')
+            command = ["convert", f'"{filename}"', "-liquid-rescale", f"{kok}%", "-resize", f"{imgdim[0]}x{imgdim[1]}", f'"{filename}"']
         await run(command)
         self.q -= 1
         return filename
@@ -178,7 +159,7 @@ class Process:
         os.remove(filename)
         return filename_png
 
-    async def ffmpeg(self, command):
+    async def ffmpeg(self, command: list):
         while self.ffmpeg_q > self.ffmpeg_limit:
             await asyncio.sleep(0.1)
         self.ffmpeg_q += 1
