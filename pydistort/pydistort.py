@@ -15,9 +15,7 @@ from PIL import Image, ImageDraw, ImageSequence
 """
 pip install -e .
 ###
-import sys
-sys.path.append("C:/Users/Admin/PycharmProjects/pydistort")
-import pydistort
+pip install -U git+https://github.com/barsikus007/pydistort
 """
 
 
