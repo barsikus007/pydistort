@@ -85,60 +85,50 @@ class Process:
         return filename_png
 
     async def render_lottie_gif(self, filename_json):
-        filename = f'{filename_json.split(".")[0]}.gif'
-        await self.render_lottie(filename_json, filename)
+        filename_gif = Path(filename_json).with_suffix('.gif')
+        await self.render_lottie(filename_json, filename_gif)
         os.remove(filename_json)
-        return filename
+        return filename_gif
 
     async def render_lottie_apng(self, filename_json):
-        filename = await self.render_lottie_gif(filename_json)
-        filename_png = f'{filename_json.split(".")[0]}.png'
-        dist_frames = []
+        filename_gif = await self.render_lottie_gif(filename_json)
+        filename_png = Path(filename_json).with_suffix('.png')
 
-        folder = Path(mkdtemp(dir='.'))
-        with Image.open(filename) as image:
-            duration = image.info["duration"]
-            frames = ImageSequence.all_frames(image)
-            for i, frame in enumerate(frames):
-                temp_name = folder / f"{i + 1:05d}.png"
-                dist_frames.append(temp_name)
-                frame.save(temp_name, format="PNG")
+        folder, duration = gif_tools.gif_to_folder(filename_gif, Path(mkdtemp(dir='.')))
+        os.remove(filename_gif)
 
         with open(filename_png, 'wb'):
-            APNG.from_files(dist_frames, delay=duration).save(filename_png)
+            APNG.from_files([*Path(folder).iterdir()], delay=duration).save(filename_png)
         shutil.rmtree(folder)
-        os.remove(filename)
         return filename_png
 
 ###
 
-    async def distort_flex(self, filename, n_frames=9, a=20, b=80, duration=200, reverse=False, random=False):
-        dist_step = (b - a) / (n_frames + 1)
+    async def distort_flex(self, filename, n_frames=9, start=20, end=80, duration=200, reverse=False, random=False):
         folder = Path(mkdtemp(dir='.'))
-        for i in range(n_frames):
-            temp_name = folder / f"{i + 1:05d}.png"
-            shutil.copyfile(filename, temp_name)
-            if random:
-                await self.distort(temp_name, randint(a, b))
-            else:
-                await self.distort(temp_name, a + dist_step * i)
-            print(f'{i + 1:05d}/{n_frames}')
-        if reverse:
-            first_frame, *dist_frames = [Image.open(folder / f"{i:05d}.png") for i in range(n_frames, 0, -1)]
+        frames = [shutil.copyfile(filename, folder / f"{i + 1:05d}.png") for i in range(n_frames)]
+        os.remove(filename)
+        if random:
+            frames = await seam_carving.distort_many([[frame, randint(start, end)] for frame in frames])
         else:
-            first_frame, *dist_frames = [Image.open(folder / f"{i + 1:05d}.png") for i in range(n_frames)]
-        filename = filename[:-4:] + ".gif"
-        first_frame.save(filename, save_all=True, append_images=dist_frames,
+            frames = await seam_carving.distort_folder(folder, start, end)
+
+        if reverse:
+            first_frame, *other_frames = [Image.open(frame) for frame in frames[::-1]]
+        else:
+            first_frame, *other_frames = [Image.open(frame) for frame in frames]
+        filename_gif = Path(filename).with_suffix('.gif')
+        first_frame.save(filename_gif, save_all=True, append_images=other_frames,
                          format="gif", duration=duration, loop=0)
-        [frame.close() for frame in [first_frame, *dist_frames]]
+        [frame.close() for frame in [first_frame, *other_frames]]
         shutil.rmtree(folder)
-        return filename
+        return filename_gif
 
-    async def distort_flex_reverse(self, filename, n_frames=10, a=1, b=70, duration=50):
-        return await self.distort_flex(filename, n_frames, a, b, duration, reverse=True)
+    async def distort_flex_reverse(self, filename, n_frames=10, start=1, end=70, duration=50):
+        return await self.distort_flex(filename, n_frames, start, end, duration, reverse=True)
 
-    async def distort_random(self, filename, n_frames=9, a=20, b=80, duration=200):
-        return await self.distort_flex(filename, n_frames, a, b, duration, random=True)
+    async def distort_random(self, filename, n_frames=9, start=20, end=80, duration=200):
+        return await self.distort_flex(filename, n_frames, start, end, duration, random=True)
 
 ###
 
