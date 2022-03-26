@@ -1,11 +1,15 @@
 import shlex
 import asyncio
+import sys
 
 from pydistort.utils.libs import json
 
 
-async def run(command: list, executable: str = None, stdin=None, quiet=True, log_stdout=False) -> bytes:
-    command_string = f'{executable} {shlex.join(command)}' if executable else shlex.join(command)
+async def run(command: list, stdin=None, quiet=True, log_stdout=False) -> bytes:
+    if sys.platform == 'win32':
+        command_string = ' '.join(command)
+    else:
+        command_string = shlex.join(command)
     proc = await asyncio.create_subprocess_shell(
         command_string,
         stdin=asyncio.subprocess.PIPE if stdin else None,

@@ -2,8 +2,9 @@ import os
 import sys
 import shutil
 import asyncio
-from pathlib import Path
+from pathlib import Path, PurePath
 from random import randint
+from tempfile import mkdtemp
 
 from apng import APNG
 from PIL import Image, ImageSequence
@@ -28,29 +29,21 @@ def make_apng(dist_frames, duration, filename_png, lib='apng') -> None:
             duration=duration,
             loop=0,
         )
-    if lib == 'magick':
-        return
 
 
 class Process:
     def __init__(self, limit=0):
-        self.limit = limit  # TODO
         self.queue = _Queue(limit)
         self.q = 0
 
-    async def create_coro(self, filename, level, it, total):
-        await self.distort(filename, level)
-        print(f'{it + 1:03d}/{total:03d}')
+    async def render_lottie(self, filename_json, filename, quiet=True):
+        command = [sys.executable, f'{scripts}lottie_convert.py', filename_json, filename, "--fps", "60"]
+        return await self.queue.add(run(command, quiet=quiet))
 
-    # TODO LEGACY async def render_lottie(self, filename_json, filename, quiet=False):
-    async def render_lottie(self, filename, filename_json, quiet=False):
-        command = [filename_json, filename, "--fps", "60"]
-        return await self.queue.add(run(command, executable=f"{sys.executable} {scripts}lottie_convert.py", quiet=quiet))
+    async def distort(self, filename, level, quiet=True):
+        return await self.queue.add(seam_carving.distort(filename, level, quiet))
 
-    async def distort(self, filename, level):
-        return await self.queue.add(seam_carving.distort(filename, level))
-
-    async def distort_many(self, distorts: list[list[str, int | float]], report_every=1, callback=None):
+    async def distort_many(self, distorts: list[list[str, int | float]], report_every=1, callback=None, quiet=True):
         if not callback:
             it = 0
 
@@ -59,51 +52,46 @@ class Process:
                 it += 1
                 if it % report_every:
                     print(f'{it:03d}/{len(distorts):03d}')
-        distorts = [self.distort(file, level) for file, level in distorts]
+        distorts = [self.distort(file, level, quiet) for file, level in distorts]
         return await self.queue.add_many(distorts, callback)
 
-    async def distort_folder(self, folder, callback=None):
+    async def distort_folder(self, folder, callback=None, quiet=True):
         if not callback:
             async def callback(filename, *args, **kwargs):
                 print(filename)
-        files = [f'{folder}/{f}' for f in os.listdir(folder)]
+        files = [*Path(folder).iterdir()]
         dist_step = 60 / (len(files) + 1)
-        await self.queue.add_many([self.distort(file, 20 + dist_step * i) for i, file in enumerate(files)], callback)
+        return await self.queue.add_many([self.distort(file, 20 + dist_step * i, quiet) for i, file in enumerate(files)], callback)
 
     async def distort_gif(self, filename):
+        distorts = []
+        folder = Path(mkdtemp(dir='.'))
         with Image.open(filename) as image:
             n_frames = image.n_frames
             duration = image.info["duration"]
             dist_step = 60 / (n_frames + 1)
             frames = ImageSequence.all_frames(image)
-            folder = Path("tmp/")
-            folder.mkdir(parents=True, exist_ok=True)
-            distorts = []
             for i, frame in enumerate(frames):
-                temp_name = f"tmp/{i + 1:03d}.png"
+                temp_name = folder / f"{i + 1:03d}.png"
                 frame.save(temp_name, format="PNG")
                 distorts.append([temp_name, 20 + dist_step * i])
-        dist_frames = []
         await self.distort_many(distorts)
-        for i in range(n_frames):
-            dist_frames.append(Image.open(f"tmp/{i + 1:03d}.png"))
-        with Image.open("tmp/001.png") as dist_image:
-            dist_image.save(filename, save_all=True, append_images=dist_frames[1:],
-                            format="gif", duration=duration, loop=0)
-            dist_frames.clear()
+        first_frame, *dist_frames = [Image.open(folder / f"{i + 1:03d}.png") for i in range(n_frames)]
+        first_frame.save(filename, save_all=True, append_images=dist_frames,
+                         format="gif", duration=duration, loop=0)
         shutil.rmtree(folder)
         return filename
 
-    async def distort_lottie_gif(self, filename_json):
+    async def distort_lottie_gif(self, filename_json, quiet=True):
         filename = f'{filename_json.split(".")[0]}.gif'
-        await self.render_lottie(filename, filename_json)
+        await self.render_lottie(filename_json, filename, quiet)
         os.remove(filename_json)
         return await self.distort_gif(filename)
 
     async def distort_lottie_apng(self, filename_json):
         link_hash = filename_json.split(".")[0]
         filename = f'{link_hash}.gif'
-        await self.render_lottie(filename, filename_json)
+        await self.render_lottie(filename_json, filename)
         os.remove(filename_json)
         filename_png = f'{link_hash}.png'
         dist_frames = []
@@ -114,13 +102,13 @@ class Process:
             frames = ImageSequence.all_frames(image)
             folder = Path("tmp/")
             folder.mkdir(parents=True, exist_ok=True)
-            coros = []
+            distorts = []
             for i, frame in enumerate(frames):
                 temp_name = f"tmp/{i + 1:03d}.png"
                 dist_frames.append(temp_name)
                 frame.save(temp_name, format="PNG")
-                coros.append(self.create_coro(temp_name, 20 + dist_step * i, i, n_frames))
-        await asyncio.gather(*coros)
+                distorts.append([temp_name, 20 + dist_step * i])
+        await self.distort_many(distorts)
         with open(filename_png, 'wb'):
             APNG.from_files(dist_frames, delay=duration).save(filename_png)
         dist_frames.clear()
@@ -130,13 +118,13 @@ class Process:
 
     async def clon_lottie_gif(self, filename_json):
         filename = f'{filename_json.split(".")[0]}.gif'
-        await self.render_lottie(filename, filename_json)
+        await self.render_lottie(filename_json, filename)
         os.remove(filename_json)
         return filename
 
     async def clon_lottie_apng(self, filename_json):
         filename = f'{filename_json.split(".")[0]}.gif'
-        await self.render_lottie(filename, filename_json)
+        await self.render_lottie(filename_json, filename)
         filename_png = f'{filename_json.split(".")[0]}.png'
         dist_frames = []
         with Image.open(filename) as image:
