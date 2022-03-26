@@ -18,8 +18,8 @@ async def distort(filename: str | Path, level: int | float, quiet=True):
         command = ['convert', f'{filename}',
                    '-liquid-rescale', f'{kok}%',
                    '-resize', f'{image.width}x{image.height}', f'{filename}']
-    if os.name == "nt":
-        command = ["magick", *command]
+    if os.name == 'nt':
+        command = ['magick', *command]
     await run(command, quiet=quiet)
     return filename
 
@@ -48,7 +48,7 @@ async def distort_gif(
     folder, duration = gif_to_folder(filename, Path(mkdtemp(dir='.')))
     frames = await distort_folder(folder, start, end, queue, callback, quiet)
     first_frame, *other_frames = [Image.open(frame) for frame in frames]
-    first_frame.save(filename, save_all=True, append_images=other_frames, format="gif", duration=duration, loop=0)
+    first_frame.save(filename, save_all=True, append_images=other_frames, format='gif', duration=duration, loop=0)
     [frame.close() for frame in [first_frame, *other_frames]]  # TODO is it required?
     shutil.rmtree(folder)
     return filename

@@ -51,8 +51,8 @@ class SeamCarving:
             for j in range(y):
                 # draw.point((i, j), fill=(int(energy[i][j]), int(energy[i][j]), int(energy[i][j]), int(energy[i][j])))
                 draw.point((i, j), fill=(abs(offs - int(energy[i][j])), abs(offs - int(energy[i][j])), abs(offs - int(energy[i][j])), abs(offs - int(energy[i][j]))))
-        print("redy")
-        im.save(self.path, format="png")
+        print('redy')
+        im.save(self.path, format='png')
 
         return self.path
 
@@ -68,15 +68,11 @@ class SeamCarving:
             for j in range(y):
                 # draw.point((i, j), fill=(int(energy[i][j]), int(energy[i][j]), int(energy[i][j]), int(energy[i][j])))
                 draw.point((i, j), fill=(abs(offs - int(energy[i][j])), abs(offs - int(energy[i][j])), abs(offs - int(energy[i][j])), abs(offs - int(energy[i][j]))))
-        print("redy")
+        print('redy')
 
         return im.show()
 
-    def find_sum(self, mode="x"):
-        """
-        :param mode: "x" - x->; "y" - y-^
-        :return: array of sum
-        """
+    def find_sum(self, mode='x'):
         image = self.image
         img_height = image.height
         img_width = image.width
@@ -119,7 +115,7 @@ class SeamCarving:
                 if i < img_width - 1 and summm[i + 1][j - 1] < summm[i][j]:
                     summm[i][j] = summm[i + 1][j - 1]
                 # print(summm[i][j])
-                # print("---")
+                # print('---')
                 summm[i][j] += energy[i][j]
         return summm
 
@@ -137,7 +133,7 @@ class SeamCarving:
                 # draw.point((i, j), fill=(int(energy[i][j]), int(energy[i][j]), int(energy[i][j]), int(energy[i][j])))
                 # print(energy[i][j])
                 draw.point((i, j), fill=(abs(offs - int(energy[i][j])), abs(offs - int(energy[i][j])), abs(offs - int(energy[i][j])), abs(offs - int(energy[i][j]))))
-        print("redy")
+        print('redy')
 
         return im.show()
 
@@ -220,7 +216,7 @@ class SeamCarving:
             # if j != 0:
             # print(j)
             draw.point((res[j], j), fill=(255, 0, 0))
-        print("redy")
+        print('redy')
 
         return image.show()
 
@@ -229,10 +225,10 @@ class SeamCarving:
         times = image.width // 100 * level
         for time in range(times):
             image = self.image
-            print(f"{time+1}/{times}")
+            print(f'{time+1}/{times}')
             res = self.find_shrinked_pixels()
             x, y = self.image.size
-            self.image = Image.new("RGBA", (x-1, y))
+            self.image = Image.new('RGBA', (x-1, y))
             draw = ImageDraw.Draw(self.image)
             get = 0
             for j in range(y):
@@ -245,19 +241,19 @@ class SeamCarving:
                 get = 0
 
 
-        print("redy")
+        print('redy')
         self.image.show()
-        return self.image.save("test2.png")
+        return self.image.save('test2.png')
 
     def remove_lines_alt(self, level=50):
         image = self.image
         times = image.width // 100 * level
         for time in range(times):
             image = self.image
-            print(f"{time+1}/{times}")
+            print(f'{time+1}/{times}')
             res = self.find_shrinked_pixels_alt()
             x, y = self.image.size
-            self.image = Image.new("RGBA", (x-1, y))
+            self.image = Image.new('RGBA', (x-1, y))
             draw = ImageDraw.Draw(self.image)
             get = 0
             for j in range(y):
@@ -269,18 +265,18 @@ class SeamCarving:
                     draw.point((i, j), fill=image.getpixel((i+get, j)))
                 get = 0
 
-        print("redy")
+        print('redy')
         self.image.show()
-        return self.image.save("test3.png")
+        return self.image.save('test3.png')
 
 
 if __name__ == '__main__':
     pass
-    # SeamCarving("test.png").show_energy()
-    # SeamCarving("test.png")._find_sum()
-    # SeamCarving("test.png")._show_sum()
-    # SeamCarving("test.png")._show_shrinked_pixels()
+    # SeamCarving('test.png').show_energy()
+    # SeamCarving('test.png')._find_sum()
+    # SeamCarving('test.png')._show_sum()
+    # SeamCarving('test.png')._show_shrinked_pixels()
 
-    # SeamCarving("test.png").remove_lines(50)
-    # SeamCarving("test.png").remove_lines_alt(50)
+    # SeamCarving('test.png').remove_lines(50)
+    # SeamCarving('test.png').remove_lines_alt(50)
     # numba

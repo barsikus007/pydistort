@@ -7,28 +7,13 @@ from random import randint
 from tempfile import mkdtemp
 
 from apng import APNG
-from PIL import Image, ImageSequence
+from PIL import Image
 
 from pydistort.image.apng_tools import gif_to_apng
 from pydistort.utils.queue import Queue as _Queue
-from pydistort.utils.runners import run
 from pydistort.image import seam_carving, lottie_tools, gif_tools
 
 scripts = sys.executable.split('python.exe')[0]
-
-
-def make_apng(dist_frames, duration, filename_png, lib='apng') -> None:
-    if lib == 'apng':
-        return APNG.from_files(dist_frames, delay=duration).save(filename_png)
-    if lib == 'pil':
-        frame, *frames = [Image.open(image) for image in dist_frames]
-        return frame.save(
-            filename_png,
-            append_images=frames,
-            save_all=True,
-            duration=duration,
-            loop=0,
-        )
 
 
 class Process:
