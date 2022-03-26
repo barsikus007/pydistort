@@ -1,4 +1,8 @@
 # PyDistort
+To install:
+```bash
+pip install -U git+https://github.com/barsikus007/pydistort
+```
 For distortion, you need to install imagemagick
 #### Linux (Ubuntu)
 ```bash
