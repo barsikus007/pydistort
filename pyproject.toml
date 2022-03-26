@@ -1,3 +1,27 @@
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "pydistort"
+version = "attr: pydistort.__version__"
+url = "https://github.com/barsikus007/pydistort"
+author = "barsikus007"
+license = "MIT"
+description = "Asynchronous media distortion module"
+long_description = "file: README.md"
+#long_description = file: README.rst, CHANGELOG.rst, LICENSE.rst
+keywords = ["distort", "async"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+project_urls = { "Bug Tracker" = "https://github.com/barsikus007/pydistort/issues" }
+dependencies  = [
+    "apng",
+    "lottie[GIF]",
+]
+python_requires = ">=3.10"
+
+#packages = find:
