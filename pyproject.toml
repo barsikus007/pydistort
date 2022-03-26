@@ -6,7 +6,6 @@ build-backend = "setuptools.build_meta"
 name = "pydistort"
 url = "https://github.com/barsikus007/pydistort"
 author = "barsikus007"
-license = "MIT"
 description = "Asynchronous media distortion module"
 keywords = ["distort", "async"]
 classifiers = [
@@ -24,6 +23,6 @@ dynamic = ["version", "readme"]
 
 [tool.setuptools.dynamic]
 version = {attr = "pydistort.__version__"}
-readme = {file = ["README.md"]}
+readme = {file = ["README.md", "LICENSE"]}
 #readme = {file = ["README.rst", "CHANGELOG.rst", "LICENSE.rst"]}
 #packages = find:
