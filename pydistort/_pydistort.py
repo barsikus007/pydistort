@@ -52,16 +52,13 @@ class Process:
                 it += 1
                 if it % report_every:
                     print(f'{it:05d}/{len(distorts):05d}')
-        distorts = [self.distort(file, level, quiet) for file, level in distorts]
-        return await self.queue.add_many(distorts, callback)
+        return await seam_carving.distort_many(distorts, self.queue, callback, quiet)
 
     async def distort_folder(self, folder, callback=None, quiet=True):
-        if not callback:
+        if callback is None:
             async def callback(filename, *args, **kwargs):
                 print(filename)
-        files = [*Path(folder).iterdir()]
-        dist_step = 60 / (len(files) + 1)
-        return await self.queue.add_many([self.distort(file, 20 + dist_step * i, quiet) for i, file in enumerate(files)], callback)
+        return await seam_carving.distort_folder(folder, self.queue, callback, quiet)
 
     async def distort_gif(self, filename):
 

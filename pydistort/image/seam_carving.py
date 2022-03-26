@@ -1,5 +1,6 @@
 import os
 import asyncio
+from pathlib import Path
 from typing import Callable
 
 from PIL import Image
@@ -20,15 +21,15 @@ async def distort(filename: str, level: int | float, quiet=True):
     return filename
 
 
-async def distort_folder(folder: str, queue: Queue = None, callback: Callable = None, quiet=True):
-    if queue and not callback:
-        async def callback(filename, **kwargs):
-            print(filename)
-    files = [f'{folder}/{f}' for f in os.listdir(folder)]
-    # files = [f'{folder}/{f}' for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
-    dist_step = 60 / (len(files) + 1)
-    coros = [distort(file, 20 + dist_step * i, quiet) for i, file in enumerate(files)]
+async def distort_many(distorts: list[list[str, int | float]], queue: Queue = None, callback: Callable = None, quiet=True):
+    distorts = [distort(file, level, quiet) for file, level in distorts]
     if queue:
-        await queue.add_many(coros, callback)
+        return await queue.add_many(distorts, callback)
     else:
-        await asyncio.gather(*coros)
+        return await asyncio.gather(*distorts)
+
+
+async def distort_folder(folder: str, queue: Queue = None, callback: Callable = None, quiet=True):
+    files = [*Path(folder).iterdir()]
+    dist_step = 60 / (len(files) + 1)
+    return await distort_many([[file, 20 + dist_step * i] for i, file in enumerate(files)], queue, callback, quiet)

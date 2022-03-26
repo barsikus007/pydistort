@@ -1,4 +1,24 @@
 # PyDistort
+For distortion, you need to install imagemagick
+#### Linux (Ubuntu)
+```bash
+sudo apt install imagemagick
+```
+#### Windows
+You can do this via scoop.sh
+```pwsh
+scoop install imagemagick
+```
+For video, gif and apng procession, you need to install ffmpeg
+#### Linux (Ubuntu)
+```bash
+sudo apt install ffmpeg
+```
+#### Windows
+You can do this via scoop.sh
+```pwsh
+scoop install ffmpeg
+```
 For lottie->gif procession you need to install gtk
 #### Linux (Ubuntu)
 soon
