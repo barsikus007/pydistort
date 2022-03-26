@@ -22,7 +22,7 @@ apng = ["apng"]
 lottie = ["lottie[GIF]==0.6.11"]
 all = ["apng", "lottie[GIF]==0.6.11"]
 
-[project.urs]
+[project.urls]
 Homepage = "https://github.com/barsikus007/pydistort"
 "Bug Tracker" = "https://github.com/barsikus007/pydistort/issues"
 
