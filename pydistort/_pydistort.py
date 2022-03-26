@@ -9,6 +9,7 @@ from tempfile import mkdtemp
 from apng import APNG
 from PIL import Image, ImageSequence
 
+from pydistort.image.apng_tools import gif_to_apng
 from pydistort.utils.queue import Queue as _Queue
 from pydistort.utils.runners import run
 from pydistort.image import seam_carving, lottie_tools, gif_tools
@@ -33,7 +34,6 @@ def make_apng(dist_frames, duration, filename_png, lib='apng') -> None:
 class Process:
     def __init__(self, limit=0):
         self.queue = _Queue(limit)
-        self.q = 0
 
     async def distort(self, filename, level, quiet=True):
         return await self.queue.add(seam_carving.distort(filename, level, quiet))
@@ -92,15 +92,8 @@ class Process:
 
     async def render_lottie_apng(self, filename_json):
         filename_gif = await self.render_lottie_gif(filename_json)
-        filename_png = Path(filename_json).with_suffix('.png')
+        return gif_to_apng(filename_gif)
 
-        folder, duration = gif_tools.gif_to_folder(filename_gif, Path(mkdtemp(dir='.')))
-        os.remove(filename_gif)
-
-        with open(filename_png, 'wb'):
-            APNG.from_files([*Path(folder).iterdir()], delay=duration).save(filename_png)
-        shutil.rmtree(folder)
-        return filename_png
 
 ###
 
@@ -132,30 +125,10 @@ class Process:
 
 ###
 
-    def png(self, filename):
+    def image_to_png(self, filename):
         filename_png = Path(filename).with_suffix('.png')
         with Image.open(filename) as image:
             image.save(filename_png)
-        os.remove(filename)
-        return filename_png
-
-    def png_gif(self, filename):
-        filename_png = Path(filename).with_suffix('.png')
-        dist_frames = []
-        with Image.open(filename) as image:
-            n_frames = image.n_frames
-            duration = image.info['duration']
-            frames = ImageSequence.all_frames(image)
-            folder = Path('tmp/')
-            folder.mkdir(parents=True, exist_ok=True)
-            for frame, i in zip(frames, range(n_frames)):
-                temp_name = f'tmp/{i + 1:05d}.png'
-                dist_frames.append(temp_name)
-                frame.save(temp_name, format='PNG')
-                print(f'{i + 1:05d}/{n_frames}')
-        with open(filename_png, 'wb'):
-            APNG.from_files(dist_frames, delay=duration).save(filename_png)
-        dist_frames.clear()
         os.remove(filename)
         return filename_png
 
@@ -164,7 +137,7 @@ class Process:
             img.save(filename, quality=1)
         return filename
 
-    def jpeg_png(self, filename):
+    def png_to_jpeg(self, filename):
         filename_jpg = Path(filename).with_suffix('.jpg')
         with Image.open(filename) as img:
             img.convert('RGB').save(filename_jpg, quality=1)
