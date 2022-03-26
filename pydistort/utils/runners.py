@@ -4,9 +4,10 @@ import asyncio
 from pydistort.utils.libs import json
 
 
-async def run(command: list, stdin=None, quiet=True, log_stdout=False) -> bytes:
+async def run(command: list, executable: str = None, stdin=None, quiet=True, log_stdout=False) -> bytes:
+    command_string = f'{executable} {shlex.join(command)}' if executable else shlex.join(command)
     proc = await asyncio.create_subprocess_shell(
-        shlex.join(command),
+        command_string,
         stdin=asyncio.subprocess.PIPE if stdin else None,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE)
@@ -14,7 +15,7 @@ async def run(command: list, stdin=None, quiet=True, log_stdout=False) -> bytes:
     stdout, stderr = await proc.communicate(stdin)
 
     if not quiet:
-        print(f'[{shlex.join(command)!r} exited with {proc.returncode}]')
+        print(f'[{command_string!r} exited with {proc.returncode}]')
         if stderr:
             print(f'[stderr]\n{stderr.decode(errors="ignore")}')
         if stdout and log_stdout:

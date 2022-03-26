@@ -8,7 +8,9 @@ from random import randint
 from apng import APNG
 from PIL import Image, ImageSequence
 
+from pydistort.utils.queue import Queue as _Queue
 from pydistort.utils.runners import run
+from pydistort.image import seam_carving
 
 
 scripts = sys.executable.split('python.exe')[0]
@@ -31,51 +33,42 @@ def make_apng(dist_frames, duration, filename_png, lib='apng') -> None:
 
 
 class Process:
-    def __init__(self, limit=5, ffmpeg_limit=10, unlimited=0):
+    def __init__(self, limit=0):
+        self.limit = limit  # TODO
+        self.queue = _Queue(limit)
         self.q = 0
-        self.ffmpeg_q = 0
-        self.limit = limit
-        self.ffmpeg_limit = ffmpeg_limit
-        self.unlimited = unlimited
 
     async def create_coro(self, filename, level, it, total):
-        # TODO notify process
         await self.distort(filename, level)
-        print(f'{it + 1}/{total}')
+        print(f'{it + 1:03d}/{total:03d}')
 
-    async def render_lottie(self, filename, filename_json):
-        while self.q > self.limit:
-            await asyncio.sleep(0.1)
-        self.q += 1
-        command = [sys.executable, f"{scripts}lottie_convert.py", filename_json, filename, "--fps", "60"]
-        await run(command)
-        self.q -= 1
-
-    async def dist(self):
-        raise NotImplementedError
+    # TODO LEGACY async def render_lottie(self, filename_json, filename, quiet=False):
+    async def render_lottie(self, filename, filename_json, quiet=False):
+        command = [filename_json, filename, "--fps", "60"]
+        return await self.queue.add(run(command, executable=f"{sys.executable} {scripts}lottie_convert.py", quiet=quiet))
 
     async def distort(self, filename, level):
-        while self.q > self.limit:
-            await asyncio.sleep(0.1)
-        self.q += 1
-        with Image.open(filename) as image:
-            imgdim = image.width, image.height
-        kok = (100 - level) % 100
-        if os.name == "nt":
-            command = ["magick", "convert", f'"{filename}"', "-liquid-rescale", f"{kok}%", "-resize", f"{imgdim[0]}x{imgdim[1]}", f'"{filename}"']
-        else:
-            command = ["convert", f'"{filename}"', "-liquid-rescale", f"{kok}%", "-resize", f"{imgdim[0]}x{imgdim[1]}", f'"{filename}"']
-        await run(command)
-        self.q -= 1
-        return filename
+        return await self.queue.add(seam_carving.distort(filename, level))
 
-    async def distort_folder(self, folder):
-        onlyfiles = [fr'{folder}\{f}' for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
-        # TODO onlyfiles to input or generate
-        dist_step = 60 / (len(onlyfiles) + 1)
-        coros = [self.create_coro(file, 20 + dist_step * i, i, len(onlyfiles)) for i, file in enumerate(onlyfiles)]
-        await asyncio.gather(*coros)
-        return
+    async def distort_many(self, distorts: list[list[str, int | float]], report_every=1, callback=None):
+        if not callback:
+            it = 0
+
+            async def callback(*args, **kwargs):
+                nonlocal it
+                it += 1
+                if it % report_every:
+                    print(f'{it:03d}/{len(distorts):03d}')
+        distorts = [self.distort(file, level) for file, level in distorts]
+        return await self.queue.add_many(distorts, callback)
+
+    async def distort_folder(self, folder, callback=None):
+        if not callback:
+            async def callback(filename, *args, **kwargs):
+                print(filename)
+        files = [f'{folder}/{f}' for f in os.listdir(folder)]
+        dist_step = 60 / (len(files) + 1)
+        await self.queue.add_many([self.distort(file, 20 + dist_step * i) for i, file in enumerate(files)], callback)
 
     async def distort_gif(self, filename):
         with Image.open(filename) as image:
@@ -85,16 +78,16 @@ class Process:
             frames = ImageSequence.all_frames(image)
             folder = Path("tmp/")
             folder.mkdir(parents=True, exist_ok=True)
-            coros = []
+            distorts = []
             for i, frame in enumerate(frames):
                 temp_name = f"tmp/{i + 1:03d}.png"
                 frame.save(temp_name, format="PNG")
-                coros.append(self.create_coro(temp_name, 20 + dist_step * i, i, n_frames))
+                distorts.append([temp_name, 20 + dist_step * i])
         dist_frames = []
-        await asyncio.gather(*coros)
+        await self.distort_many(distorts)
         for i in range(n_frames):
             dist_frames.append(Image.open(f"tmp/{i + 1:03d}.png"))
-        with Image.open("tmp/1.png") as dist_image:
+        with Image.open("tmp/001.png") as dist_image:
             dist_image.save(filename, save_all=True, append_images=dist_frames[1:],
                             format="gif", duration=duration, loop=0)
             dist_frames.clear()
@@ -165,13 +158,6 @@ class Process:
         os.remove(filename_json)
         os.remove(filename)
         return filename_png
-
-    async def ffmpeg(self, command: list):
-        while self.ffmpeg_q > self.ffmpeg_limit:
-            await asyncio.sleep(0.1)
-        self.ffmpeg_q += 1
-        await run(command)
-        self.q -= 1
 
 ###
 
@@ -267,6 +253,6 @@ class Process:
 
 
 if __name__ == '__main__':
-    asyncio.get_event_loop().run_until_complete(
+    asyncio.run(
         Process().render_lottie(filename_json='../AnimatedSticker.tgs', filename='../A.png')
     )
