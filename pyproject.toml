@@ -26,8 +26,8 @@ all = ["apng", "lottie[GIF]==0.6.11"]
 Homepage = "https://github.com/barsikus007/pydistort"
 "Bug Tracker" = "https://github.com/barsikus007/pydistort/issues"
 
-#[[project.authors]]
-#name = "barsikus007"
+[[project.authors]]
+name = "barsikus007"
 
 [tool.setuptools.dynamic]
 version = {attr = "pydistort.__version__"}
