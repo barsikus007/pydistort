@@ -51,7 +51,7 @@ class Process:
                 nonlocal it
                 it += 1
                 if it % report_every:
-                    print(f'{it:03d}/{len(distorts):03d}')
+                    print(f'{it:05d}/{len(distorts):05d}')
         distorts = [self.distort(file, level, quiet) for file, level in distorts]
         return await self.queue.add_many(distorts, callback)
 
@@ -64,6 +64,7 @@ class Process:
         return await self.queue.add_many([self.distort(file, 20 + dist_step * i, quiet) for i, file in enumerate(files)], callback)
 
     async def distort_gif(self, filename):
+
         distorts = []
         folder = Path(mkdtemp(dir='.'))
         with Image.open(filename) as image:
@@ -72,13 +73,15 @@ class Process:
             dist_step = 60 / (n_frames + 1)
             frames = ImageSequence.all_frames(image)
             for i, frame in enumerate(frames):
-                temp_name = folder / f"{i + 1:03d}.png"
+                temp_name = folder / f"{i + 1:05d}.png"
                 frame.save(temp_name, format="PNG")
                 distorts.append([temp_name, 20 + dist_step * i])
         await self.distort_many(distorts)
-        first_frame, *dist_frames = [Image.open(folder / f"{i + 1:03d}.png") for i in range(n_frames)]
+
+        first_frame, *dist_frames = [Image.open(folder / f"{i + 1:05d}.png") for i in range(n_frames)]
         first_frame.save(filename, save_all=True, append_images=dist_frames,
                          format="gif", duration=duration, loop=0)
+        [frame.close() for frame in [first_frame, *dist_frames]]  # TODO is it required?
         shutil.rmtree(folder)
         return filename
 
@@ -94,56 +97,49 @@ class Process:
         await self.render_lottie(filename_json, filename)
         os.remove(filename_json)
         filename_png = f'{link_hash}.png'
-        dist_frames = []
+
+        distorts = []
+        folder = Path(mkdtemp(dir='.'))
         with Image.open(filename) as image:
             n_frames = image.n_frames
             duration = image.info["duration"]
             dist_step = 60 / (n_frames + 1)
             frames = ImageSequence.all_frames(image)
-            folder = Path("tmp/")
-            folder.mkdir(parents=True, exist_ok=True)
-            distorts = []
             for i, frame in enumerate(frames):
-                temp_name = f"tmp/{i + 1:03d}.png"
-                dist_frames.append(temp_name)
+                temp_name = folder / f"{i + 1:05d}.png"
                 frame.save(temp_name, format="PNG")
                 distorts.append([temp_name, 20 + dist_step * i])
         await self.distort_many(distorts)
+
         with open(filename_png, 'wb'):
-            APNG.from_files(dist_frames, delay=duration).save(filename_png)
-        dist_frames.clear()
+            APNG.from_files([_[0] for _ in distorts], delay=duration).save(filename_png)
         shutil.rmtree(folder)
         os.remove(filename)
         return filename_png
 
-    async def clon_lottie_gif(self, filename_json):
+    async def render_lottie_gif(self, filename_json):
         filename = f'{filename_json.split(".")[0]}.gif'
         await self.render_lottie(filename_json, filename)
         os.remove(filename_json)
         return filename
 
-    async def clon_lottie_apng(self, filename_json):
-        filename = f'{filename_json.split(".")[0]}.gif'
-        await self.render_lottie(filename_json, filename)
+    async def render_lottie_apng(self, filename_json):
+        filename = await self.render_lottie_gif(filename_json)
         filename_png = f'{filename_json.split(".")[0]}.png'
         dist_frames = []
+
+        folder = Path(mkdtemp(dir='.'))
         with Image.open(filename) as image:
-            n_frames = image.n_frames
             duration = image.info["duration"]
             frames = ImageSequence.all_frames(image)
-            folder = Path("tmp/")
-            folder.mkdir(parents=True, exist_ok=True)
             for i, frame in enumerate(frames):
-                temp_name = f"tmp/{i + 1:03d}.png"
+                temp_name = folder / f"{i + 1:05d}.png"
                 dist_frames.append(temp_name)
                 frame.save(temp_name, format="PNG")
-                print(f'{i + 1:03d}/{n_frames}')
 
         with open(filename_png, 'wb'):
             APNG.from_files(dist_frames, delay=duration).save(filename_png)
-        dist_frames.clear()
         shutil.rmtree(folder)
-        os.remove(filename_json)
         os.remove(filename)
         return filename_png
 
@@ -151,27 +147,23 @@ class Process:
 
     async def distort_flex(self, filename, n_frames=9, a=20, b=80, duration=200, reverse=False, random=False):
         dist_step = (b - a) / (n_frames + 1)
-        folder = Path("tmp/")
-        folder.mkdir(parents=True, exist_ok=True)
+        folder = Path(mkdtemp(dir='.'))
         for i in range(n_frames):
-            temp_name = f"tmp/{i + 1:03d}.png"
+            temp_name = folder / f"{i + 1:05d}.png"
             shutil.copyfile(filename, temp_name)
             if random:
                 await self.distort(temp_name, randint(a, b))
             else:
                 await self.distort(temp_name, a + dist_step * i)
-            print(f'{i + 1:03d}/{n_frames}')
-        dist_frames = []
-        for i in range(n_frames):
-            dist_frames.append(Image.open(f"tmp/{i + 1:03d}.png"))
+            print(f'{i + 1:05d}/{n_frames}')
         if reverse:
-            for i in range(n_frames, 0, -1):
-                dist_frames.append(Image.open(f"tmp/{i:03d}.png"))
+            first_frame, *dist_frames = [Image.open(folder / f"{i:05d}.png") for i in range(n_frames, 0, -1)]
+        else:
+            first_frame, *dist_frames = [Image.open(folder / f"{i + 1:05d}.png") for i in range(n_frames)]
         filename = filename[:-4:] + ".gif"
-        with Image.open("tmp/1.png") as dist_image:
-            dist_image.save(filename, save_all=True, append_images=dist_frames[1:],
-                            format="gif", duration=duration, loop=0)
-            dist_frames.clear()
+        first_frame.save(filename, save_all=True, append_images=dist_frames,
+                         format="gif", duration=duration, loop=0)
+        [frame.close() for frame in [first_frame, *dist_frames]]
         shutil.rmtree(folder)
         return filename
 
@@ -200,10 +192,10 @@ class Process:
             folder = Path("tmp/")
             folder.mkdir(parents=True, exist_ok=True)
             for frame, i in zip(frames, range(n_frames)):
-                temp_name = f"tmp/{i + 1:03d}.png"
+                temp_name = f"tmp/{i + 1:05d}.png"
                 dist_frames.append(temp_name)
                 frame.save(temp_name, format="PNG")
-                print(f'{i + 1:03d}/{n_frames}')
+                print(f'{i + 1:05d}/{n_frames}')
         with open(filename_png, 'wb'):
             APNG.from_files(dist_frames, delay=duration).save(filename_png)
         dist_frames.clear()

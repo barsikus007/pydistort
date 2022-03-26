@@ -81,12 +81,12 @@ def ffmpg_test(filename_gif, filename_png):
         folder.mkdir(parents=True, exist_ok=True)
         for i, frame in enumerate(frames):
             frame = frame.convert("RGBA")
-            temp_name = f"tmp/{i + 1:03d}.png"
+            temp_name = f"tmp/{i + 1:05d}.png"
             dist_frames.append(temp_name)
             frame.save(temp_name, format="PNG")
-            print(f'{i + 1:03d}/{n_frames:03d}')
+            print(f'{i + 1:05d}/{n_frames:05d}')
         print(duration)
-    os.system(f'ffmpeg -framerate {1000/duration} -i tmp/%03d.png -plays 0 -f apng {filename_png} -y')
+    os.system(f'ffmpeg -framerate {1000/duration} -i tmp/%05d.png -plays 0 -f apng {filename_png} -y')
 
 
 def magick_test(filename_gif, filename_png):
@@ -101,10 +101,10 @@ def magick_test(filename_gif, filename_png):
         folder.mkdir(parents=True, exist_ok=True)
         for i, frame in enumerate(frames):
             # frame = frame.convert("RGBA")
-            temp_name = f"tmp/{i + 1:03d}.png"
+            temp_name = f"tmp/{i + 1:05d}.png"
             dist_frames.append(temp_name)
             frame.save(temp_name, format="PNG")
-            print(f'{i + 1:03d}/{n_frames:03d}')
+            print(f'{i + 1:05d}/{n_frames:05d}')
         print(duration)
     os.system(f'magick convert -delay {duration} tmp/*.png -loop 0 APNG:{filename_png}')
 
