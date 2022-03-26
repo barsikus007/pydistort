@@ -106,7 +106,7 @@ class Process:
 
     async def distort_flex(self, filename, n_frames=9, start=20, end=80, duration=200, reverse=False, random=False):
         folder = Path(mkdtemp(dir='.'))
-        frames = [shutil.copyfile(filename, folder / f"{i + 1:05d}.png") for i in range(n_frames)]
+        frames = [shutil.copyfile(filename, folder / f'{i + 1:05d}.png') for i in range(n_frames)]
         os.remove(filename)
         if random:
             frames = await seam_carving.distort_many([[frame, randint(start, end)] for frame in frames])
@@ -119,7 +119,7 @@ class Process:
             first_frame, *other_frames = [Image.open(frame) for frame in frames]
         filename_gif = Path(filename).with_suffix('.gif')
         first_frame.save(filename_gif, save_all=True, append_images=other_frames,
-                         format="gif", duration=duration, loop=0)
+                         format='gif', duration=duration, loop=0)
         [frame.close() for frame in [first_frame, *other_frames]]
         shutil.rmtree(folder)
         return filename_gif
@@ -133,25 +133,25 @@ class Process:
 ###
 
     def png(self, filename):
-        filename_png = f'{filename.split(".")[0]}.png'
+        filename_png = Path(filename).with_suffix('.png')
         with Image.open(filename) as image:
             image.save(filename_png)
         os.remove(filename)
         return filename_png
 
     def png_gif(self, filename):
-        filename_png = f'{filename.split(".")[0]}.png'
+        filename_png = Path(filename).with_suffix('.png')
         dist_frames = []
         with Image.open(filename) as image:
             n_frames = image.n_frames
-            duration = image.info["duration"]
+            duration = image.info['duration']
             frames = ImageSequence.all_frames(image)
-            folder = Path("tmp/")
+            folder = Path('tmp/')
             folder.mkdir(parents=True, exist_ok=True)
             for frame, i in zip(frames, range(n_frames)):
-                temp_name = f"tmp/{i + 1:05d}.png"
+                temp_name = f'tmp/{i + 1:05d}.png'
                 dist_frames.append(temp_name)
-                frame.save(temp_name, format="PNG")
+                frame.save(temp_name, format='PNG')
                 print(f'{i + 1:05d}/{n_frames}')
         with open(filename_png, 'wb'):
             APNG.from_files(dist_frames, delay=duration).save(filename_png)
@@ -165,7 +165,7 @@ class Process:
         return filename
 
     def jpeg_png(self, filename):
-        filename_jpg = f'{filename.split(".")[0]}.jpg'
+        filename_jpg = Path(filename).with_suffix('.jpg')
         with Image.open(filename) as img:
             img.convert('RGB').save(filename_jpg, quality=1)
         with Image.open(filename_jpg) as img:
@@ -182,7 +182,7 @@ class Process:
                     new_data.append((255, 255, 255, 0))
                 else:
                     new_data.append((item[0], item[1], item[2], 255))
-            new_img = Image.new("RGBA", img.size)
+            new_img = Image.new('RGBA', img.size)
             new_img.putdata(new_data)
             new_img.save(filename)
         os.remove(filename_jpg)
