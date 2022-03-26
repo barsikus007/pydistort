@@ -37,3 +37,4 @@ It is very slow
 - [ ] Rewrite seam carving py
 - [ ] Add ffmpeg commands
 - [ ] Make optional dependencies
+- [ ] lottie -p parameter
