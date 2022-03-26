@@ -27,7 +27,7 @@ Homepage = "https://github.com/barsikus007/pydistort"
 "Bug Tracker" = "https://github.com/barsikus007/pydistort/issues"
 
 [[project.authors]]
-Name = "barsikus007"
+name = "barsikus007"
 
 [tool.setuptools.dynamic]
 version = {attr = "pydistort.__version__"}
