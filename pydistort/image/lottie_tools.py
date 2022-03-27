@@ -1,9 +1,12 @@
 import os
+import shutil
 import sys
-from pathlib import Path
 from typing import Callable
+from pathlib import Path
+from tempfile import mkdtemp
 
-from pydistort import Queue
+from pydistort import Queue, gif_to_folder
+from pydistort.image import seam_carving
 from pydistort.image.apng_tools import gif_to_apng
 from pydistort.image.seam_carving import distort_gif
 from pydistort.utils.runners import run
@@ -40,3 +43,22 @@ async def distort_lottie_gif(
     await render_lottie(filename_json, filename, quiet)
     os.remove(filename_json)
     return await distort_gif(filename, start, end, queue, callback, quiet)
+
+
+async def distort_lottie_apng(
+        filename_json: str | Path,
+        queue: Queue = None, callback: Callable = None, quiet=True):
+    from apng import APNG  # TODO
+    filename_gif = Path(filename_json).with_suffix('.gif')
+    filename_png = Path(filename_json).with_suffix('.png')
+    await render_lottie(filename_json, filename_gif, quiet)
+    os.remove(filename_json)
+
+    folder, duration = gif_to_folder(filename_gif, Path(mkdtemp(dir='.')))
+    os.remove(filename_gif)
+    frames = await seam_carving.distort_folder(folder, 20, 80, queue, callback, quiet)
+
+    with open(filename_png, 'wb'):
+        APNG.from_files(frames, delay=duration).save(filename_png)
+    shutil.rmtree(folder)
+    return filename_png

@@ -2,6 +2,7 @@ import os
 import asyncio
 import shutil
 from pathlib import Path
+from random import randint
 from tempfile import mkdtemp
 from typing import Callable
 
@@ -27,6 +28,16 @@ async def distort(filename: str | Path, level: int | float, quiet=True):
 async def distort_many(
         distorts: list[list[str | Path, int | float]],
         queue: Queue = None, callback: Callable = None, quiet=True):
+    """
+    # callback example:
+    it = 0
+
+    async def callback(*args, **kwargs):
+        nonlocal it
+        it += 1
+        if it % report_every:
+            print(f'{it:05d}/{len(distorts):05d}')
+    """
     distorts = [distort(file, level, quiet) for file, level in distorts]
     if queue:
         return await queue.add_many(distorts, callback)
@@ -52,3 +63,31 @@ async def distort_gif(
     [frame.close() for frame in [first_frame, *other_frames]]  # TODO is it required?
     shutil.rmtree(folder)
     return filename
+
+
+async def distort_flex(
+        filename: str | Path, n_frames=9, start=20, end=80,
+        duration=200, reverse=False, random=False,
+        queue: Queue = None, callback: Callable = None, quiet=True):
+    """
+    reverse: n_frames=10, start=1, end=70, duration=50, reverse=True
+    random: n_frames=9, start=20, end=80, duration=200, random=True
+    """
+    folder = Path(mkdtemp(dir='.'))
+    frames = [shutil.copyfile(filename, folder / f'{i + 1:05d}.png') for i in range(n_frames)]
+    os.remove(filename)
+    if random:
+        frames = await distort_many([[frame, randint(start, end)] for frame in frames], queue, callback, quiet)
+    else:
+        frames = await distort_folder(folder, start, end, queue, callback, quiet)
+
+    if reverse:
+        first_frame, *other_frames = [Image.open(frame) for frame in frames[::-1]]
+    else:
+        first_frame, *other_frames = [Image.open(frame) for frame in frames]
+    filename_gif = Path(filename).with_suffix('.gif')
+    first_frame.save(filename_gif, save_all=True, append_images=other_frames,
+                     format='gif', duration=duration, loop=0)
+    [frame.close() for frame in [first_frame, *other_frames]]
+    shutil.rmtree(folder)
+    return filename_gif

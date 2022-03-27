@@ -3,7 +3,7 @@ from pathlib import Path
 from pydistort.utils.runners import run
 
 
-def make_apng(dist_frames, duration, filename_png, lib='apng') -> None:
+def make_apng(dist_frames, duration, filename_png, lib='apng') -> None:  # TODO
     # os.system(f'magick convert -delay {duration} tmp/*.png -loop 0 APNG:{filename_png}')
     # os.system(f'ffmpeg -framerate {1000/duration} -i tmp/%05d.png -plays 0 -f apng {filename_png} -y')
     if lib == 'apng':
@@ -21,23 +21,23 @@ def make_apng(dist_frames, duration, filename_png, lib='apng') -> None:
         )
 
 
-def gif_to_apng_(filename_gif):
+def gif_to_apng_(filename_gif: str | Path):
     import os
     from pathlib import Path
     from tempfile import mkdtemp
 
     from apng import APNG
-    from pydistort.image import gif_tools
+    from pydistort.image import gif_to_folder
 
     filename_png = Path(filename_gif).with_suffix('.png')
-    folder, duration = gif_tools.gif_to_folder(filename_gif, Path(mkdtemp(dir='.')))
+    folder, duration = gif_to_folder(filename_gif, Path(mkdtemp(dir='.')))
     os.remove(filename_gif)
     with open(filename_png, 'wb'):
         APNG.from_files([*Path(folder).iterdir()], delay=duration).save(filename_png)
     return filename_png
 
 
-async def gif_to_apng(filename_gif, filename_png):
+async def gif_to_apng(filename_gif: str | Path, filename_png: str | Path):
     await run(['ffmpeg', '-i', filename_gif, '-f', 'apng', filename_png])
     return filename_png
 

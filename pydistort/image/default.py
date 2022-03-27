@@ -3,6 +3,7 @@ from pathlib import Path
 
 from PIL import Image, ImageSequence
 
+
 __all__ = ['jpeg_lq', 'image_to_png', 'png_to_jpeg_lq', 'gif_to_folder']
 
 
