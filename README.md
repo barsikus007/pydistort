@@ -4,7 +4,7 @@ To install:
 # without optional dependencies:
 pip install -U git+https://github.com/barsikus007/pydistort
 # with optional dependencies:
-pip install -U "pydistort[all]@ git+https://github.com/barsikus007/pydistort
+pip install -U "pydistort[all]@ git+https://github.com/barsikus007/pydistort"
 ```
 For distortion, you need to install imagemagick
 #### Linux (Ubuntu)
