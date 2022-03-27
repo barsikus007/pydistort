@@ -7,7 +7,7 @@ from typing import Callable
 
 from PIL import Image
 
-from pydistort.image.gif_tools import gif_to_folder
+from pydistort.image import gif_to_folder
 from pydistort.utils.queue import Queue
 from pydistort.utils.runners import run
 

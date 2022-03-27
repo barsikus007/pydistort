@@ -25,7 +25,9 @@ scoop install ffmpeg
 ```
 For lottie->gif procession you need to install gtk
 #### Linux (Ubuntu)
-soon
+```bash
+sudo apt install libgtk-3-0
+```
 #### Windows
 You can do this via scoop.sh
 ```pwsh
@@ -40,5 +42,4 @@ It is very slow
 - [ ] Rewrite seam carving
 - [ ] Rewrite seam carving py
 - [ ] Add ffmpeg commands
-- [ ] Make optional dependencies
 - [ ] lottie -p parameter

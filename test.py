@@ -7,8 +7,8 @@ from pydistort.image import seam_carving
 
 async def main():
     proc = Process()
-    os.system('wsl cp example.gif example1.gif')
-    print(await seam_carving.distort_gif('example1.gif', quiet=False))
+    # os.system('wsl cp example.gif example1.gif')
+    # print(await seam_carving.distort_gif('example1.gif', quiet=False))
     # print(await proc.distort_gif('example1.gif'))
     # print(await proc.distort_folder('tmp', quiet=False))
     # print(await proc.distort_lottie_gif('tgs.json', False))

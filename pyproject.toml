@@ -14,13 +14,13 @@ classifiers = [
 dynamic = ["version", "readme"]
 requires-python = ">=3.10"
 dependencies  = [
-    "pillow",
+    "pillow~=9.0",
 ]
 
 [project.optional-dependencies]
-apng = ["apng"]
-lottie = ["lottie[GIF]==0.6.11"]
-all = ["apng", "lottie[GIF]==0.6.11"]
+apng = ["apng~=0.3.4"]
+lottie = ["lottie[GIF]~=0.6.11"]
+all = ["apng~=0.3.4", "lottie[GIF]~=0.6.11"]
 
 [project.urls]
 Homepage = "https://github.com/barsikus007/pydistort"
