@@ -1,7 +1,10 @@
 # PyDistort
 To install:
 ```bash
+# without optional dependencies:
 pip install -U git+https://github.com/barsikus007/pydistort
+# with optional dependencies:
+pip install -U "pydistort[all]@ git+https://github.com/barsikus007/pydistort
 ```
 For distortion, you need to install imagemagick
 #### Linux (Ubuntu)
@@ -35,11 +38,16 @@ scoop install msys2
 msys2  # then exit in msys shell
 msys2 -c "pacman -S mingw-w64-x86_64-gtk3 --noconfirm"
 ```
-## Seam Carving py
-It is very slow
-## TODO
+## Usage
+```python
+from pydistort.image.seam_carving import distort
+
+await distort('image.png', 60)
+```
+## TODO for 0.1.0 release
 - [ ] Write readme
 - [ ] Rewrite seam carving
 - [ ] Rewrite seam carving py
+- [ ] Maybe rewrite to Glaxnimate
 - [ ] Add ffmpeg commands
 - [ ] lottie -p parameter

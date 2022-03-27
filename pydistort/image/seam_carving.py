@@ -60,7 +60,7 @@ async def distort_gif(
     frames = await distort_folder(folder, start, end, queue, callback, quiet)
     first_frame, *other_frames = [Image.open(frame) for frame in frames]
     first_frame.save(filename, save_all=True, append_images=other_frames, format='gif', duration=duration, loop=0)
-    [frame.close() for frame in [first_frame, *other_frames]]  # TODO is it required?
+    [frame.close() for frame in [first_frame, *other_frames]]
     shutil.rmtree(folder)
     return filename
 
