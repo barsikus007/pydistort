@@ -11,7 +11,7 @@ async def webm_to_folder(filename, folder: str | Path):
     width = info['streams'][0]['width']
 
     duration = float(info['format']['duration'])
-    framerate = info['streams'][0]['r_frame_rate']
+    framerate = info['streams'][0]['avg_frame_rate']
     framerate = int(framerate.split('/')[0]) / int(framerate.split('/')[1])
     total_frames = int(duration * framerate)
 
