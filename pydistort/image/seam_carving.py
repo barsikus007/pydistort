@@ -84,9 +84,11 @@ async def distort_flex(
     reverse: n_frames=10, start=1, end=70, duration=50, reverse=True
     random: n_frames=9, start=20, end=80, duration=200, random=True
     """
+    if not isinstance(filename, Path):
+        filename = Path(filename)
     folder = Path(mkdtemp(dir='.'))
     frames = [shutil.copyfile(filename, folder / f'{i + 1:05d}.png') for i in range(n_frames)]
-    os.remove(filename)
+    filename.unlink()
     if random:
         frames = await distort_many([[frame, randint(start, end)] for frame in frames], queue, callback, quiet)
     else:

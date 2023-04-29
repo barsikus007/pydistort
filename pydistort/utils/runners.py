@@ -5,7 +5,10 @@ import sys
 from pydistort.utils.libs import json
 
 
-async def run(command: list, stdin=None, quiet=True, log_stdout=False) -> bytes:
+async def run(
+        command: list, stdin=None, quiet=True,
+        log_stdout=False, env: dict | None = None,
+) -> bytes:
     if sys.platform == 'win32':
         command_string = ' '.join(command)
     else:
@@ -14,7 +17,8 @@ async def run(command: list, stdin=None, quiet=True, log_stdout=False) -> bytes:
         command_string,
         stdin=asyncio.subprocess.PIPE if stdin else None,
         stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE)
+        stderr=asyncio.subprocess.PIPE,
+        **({'env': env} if env else {}))
 
     stdout, stderr = await proc.communicate(stdin)
 
