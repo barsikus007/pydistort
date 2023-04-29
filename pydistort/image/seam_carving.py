@@ -8,9 +8,10 @@ from typing import Callable
 
 from PIL import Image
 
-from pydistort.image import gif_to_folder
+from pydistort.image import gif_to_folder, webm_to_folder, folder_to_webm
 from pydistort.utils.queue import Queue
 from pydistort.utils.runners import run
+from pydistort.utils.libs import json
 
 
 async def distort(filename: str | Path, level: int | float, quiet=True):
@@ -61,6 +62,16 @@ async def distort_gif(
     first_frame, *other_frames = [Image.open(frame) for frame in frames]
     first_frame.save(filename, save_all=True, append_images=other_frames, format='gif', duration=duration, loop=0)
     [frame.close() for frame in [first_frame, *other_frames]]
+    shutil.rmtree(folder)
+    return filename
+
+
+async def distort_webm(
+        filename: str | Path, start=20, end=80,
+        queue: Queue = None, callback: Callable = None, quiet=True):
+    folder, framerate = await webm_to_folder(filename, Path(mkdtemp(dir='.')))
+    await distort_folder(folder, start, end, queue, callback, quiet)
+    await folder_to_webm(folder, filename, framerate)
     shutil.rmtree(folder)
     return filename
 
