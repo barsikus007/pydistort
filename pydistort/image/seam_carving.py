@@ -65,6 +65,41 @@ async def distort_gif(
     return filename
 
 
+async def webm_to_folder(filename, folder: str | Path):
+    info = await probe(filename)
+    width = info['streams'][0]['width']
+
+    duration = float(info['format']['duration'])
+    framerate = eval(info['streams'][0]['r_frame_rate'])
+    total_frames = int(duration * framerate)
+
+    for i in range(total_frames):
+        output_filename = folder / f'{i + 1:05d}.png'
+        time_to_frame = i / framerate
+
+        command = ['ffmpeg', '-i', filename,
+                   '-ss', str(time_to_frame),
+                   '-vf', f'scale={width}:-1',
+                   '-vframes', '1',
+                   '-q:v', '1', str(output_filename)]
+
+        await run(command, quiet=True)
+    return folder, duration
+
+
+async def distort_webm(
+        filename: str | Path, start=20, end=80,
+        queue: Queue = None, callback: Callable = None, quiet=True):
+    folder, duration = await webm_to_folder(filename, Path(mkdtemp(dir='.')))
+    frames = await distort_folder(folder, start, end, queue, callback, quiet)
+    first_frame, *other_frames = [Image.open(frame) for frame in frames]
+    filename = filename.replace('.webm', '.gif')
+    first_frame.save(filename, save_all=True, append_images=other_frames, format='gif', duration=duration*50, loop=0)
+    [frame.close() for frame in [first_frame, *other_frames]]
+    shutil.rmtree(folder)
+    return filename
+
+
 async def distort_flex(
         filename: str | Path, n_frames=9, start=20, end=80,
         duration=200, reverse=False, random=False,
