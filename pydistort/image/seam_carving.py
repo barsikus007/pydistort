@@ -8,9 +8,10 @@ from typing import Callable
 
 from PIL import Image
 
-from pydistort.image import gif_to_folder
+from pydistort.image import gif_to_folder, webm_to_folder, folder_to_webm
 from pydistort.utils.queue import Queue
 from pydistort.utils.runners import run
+from pydistort.utils.libs import json
 
 
 async def distort(filename: str | Path, level: int | float, quiet=True):
@@ -63,39 +64,6 @@ async def distort_gif(
     [frame.close() for frame in [first_frame, *other_frames]]
     shutil.rmtree(folder)
     return filename
-
-
-async def webm_to_folder(filename, folder: str | Path):
-    info = await probe(filename)
-    width = info['streams'][0]['width']
-
-    duration = float(info['format']['duration'])
-    framerate = eval(info['streams'][0]['r_frame_rate'])
-    total_frames = int(duration * framerate)
-
-    for i in range(total_frames):
-        output_filename = folder / f'{i + 1:05d}.png'
-        time_to_frame = i / framerate
-
-        command = ['ffmpeg', '-i', filename,
-                   '-ss', str(time_to_frame),
-                   '-vf', f'scale={width}:-1',
-                   '-vframes', '1',
-                   '-q:v', '1', str(output_filename)]
-
-        await run(command, quiet=True)
-    return folder, duration
-
-
-async def folder_to_webm(folder: str | Path, filename_webm, framerate):
-    await run(
-        ['ffmpeg', '-y',
-         '-i', f'{folder}/%05d.png',
-         '-framerate', str(framerate),
-         '-crf', '1',
-         '-pix_fmt', 'yuv420p',
-         filename_webm], quiet=True)
-    return filename_webm
 
 
 async def distort_webm(
