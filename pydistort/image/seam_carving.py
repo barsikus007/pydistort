@@ -87,15 +87,23 @@ async def webm_to_folder(filename, folder: str | Path):
     return folder, duration
 
 
+async def folder_to_webm(folder: str | Path, filename_webm, framerate):
+    await run(
+        ['ffmpeg', '-y',
+         '-i', f'{folder}/%05d.png',
+         '-framerate', str(framerate),
+         '-crf', '1',
+         '-pix_fmt', 'yuv420p',
+         filename_webm], quiet=True)
+    return filename_webm
+
+
 async def distort_webm(
         filename: str | Path, start=20, end=80,
         queue: Queue = None, callback: Callable = None, quiet=True):
-    folder, duration = await webm_to_folder(filename, Path(mkdtemp(dir='.')))
-    frames = await distort_folder(folder, start, end, queue, callback, quiet)
-    first_frame, *other_frames = [Image.open(frame) for frame in frames]
-    filename = filename.replace('.webm', '.gif')
-    first_frame.save(filename, save_all=True, append_images=other_frames, format='gif', duration=duration*50, loop=0)
-    [frame.close() for frame in [first_frame, *other_frames]]
+    folder, framerate = await webm_to_folder(filename, Path(mkdtemp(dir='.')))
+    await distort_folder(folder, start, end, queue, callback, quiet)
+    await folder_to_webm(folder, filename, framerate)
     shutil.rmtree(folder)
     return filename
 
