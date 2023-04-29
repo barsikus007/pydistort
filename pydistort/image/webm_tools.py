@@ -34,7 +34,6 @@ async def folder_to_webm(folder: str | Path, filename_webm, framerate):
         ['ffmpeg', '-y',
          '-i', f'{folder}/%05d.png',
          '-framerate', str(framerate),
-         '-crf', '1',
          '-pix_fmt', 'yuv420p',
          filename_webm], quiet=True)
     return filename_webm
