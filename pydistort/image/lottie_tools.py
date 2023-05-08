@@ -16,7 +16,7 @@ scripts = sys.executable.split('python.exe')[0]
 
 
 async def render_lottie(filename_json: str | Path, filename, quiet=True):
-    command = [sys.executable, f'{scripts}lottie_convert.py', filename_json, filename, '--fps', '60']
+    command = [sys.executable, f'{scripts}Scripts\\lottie_convert.py', filename_json, filename, '--fps', '60']
     if not quiet:
         command.append('-p')
     await run(command, quiet=quiet)
